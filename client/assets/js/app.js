@@ -63,16 +63,30 @@ const App = (function(){
        }
    }
 
-   let _setText = (id, text) => {
-       const el = App._document.getElementById(id);
-       el.value = text;
-   };
+    let _setText = (id, text) => {
+        const el = App._document.getElementById(id);
+        el.value = text;
+    };
+
+    let _call = (callback) => {
+        const options = {
+            increment: 3,
+            rOffset: 1,
+            gOffset: 0,
+            bOffset: 0,
+            aOffset: 3
+        };
+        const imageData = App._ctx.getImageData(0, 0, App._canvas.width, App._canvas.height);
+        imageData.data = callback(imageData.data, options);
+        App._ctx.putImageData(imageData, 0, 0);
+    };
 
    App.init = _document => {
-       App._document = _document;
-       App._canvas = document.getElementById("canvas");
-       
-       _attachEventHandler("fileInput", "change", (el, event) => {
+        App._document = _document;
+        App._canvas = document.getElementById("canvas");
+        App._ctx = App._canvas.getContext("2d");
+
+        _attachEventHandler("fileInput", "change", (el, event) => {
             _toggleLoad();
             event.preventDefault();
             const file = el.files[0];
@@ -81,9 +95,18 @@ const App = (function(){
             image.onload = () => {
                 App._canvas.width = image.width;
                 App._canvas.height = image.height;
-                const ctx = App._canvas.getContext("2d");
-                ctx.drawImage(image, 0, 0);
+                App._ctx.drawImage(image, 0, 0);
                 _toggleLoad();
+                _call((data, options) => {
+                    const outData = data;
+                    for(let i = 0; i < data.length; i += options.increment){
+                        outData[i+0] = options.rValue ? options.rValue : outData[i+options.rOffset]; // r
+                        outData[i+1] = options.gValue ? options.gValue : outData[i+options.gOffset]; // g
+                        outData[i+2] = options.bValue ? options.bValue : outData[i+options.bOffset]; // b
+                        outData[i+3] = options.aValue ? options.aValue : outData[i+options.aOffset]; // a
+                    }
+                    return outData;
+                });
             };
             image.onerror = () => {
                 _addError("imageForm", "Image could not be loaded");
@@ -91,7 +114,15 @@ const App = (function(){
             };
         });
 
-
+        _attachEventHandler("downloadBtn", "click", (el, event) => {
+            event.preventDefault();
+            const link = App._document.createElement('a');
+            link.href = App._canvas.toDataURL("jpeg");
+            link.download = `output_${_getRandomString(8)}.jpeg`;
+            App._document.body.appendChild(link);
+            link.click();
+            App._document.body.removeChild(link);
+        });
    };
    return App;
 })();
