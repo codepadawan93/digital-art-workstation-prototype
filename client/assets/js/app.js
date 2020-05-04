@@ -63,19 +63,24 @@ const App = (function(){
        }
    }
 
+   let _getSettings = () => {
+        const settings = {};
+        const formData = new FormData(App._document.getElementById('imageForm'));
+        for(const tuple of formData.entries()) {
+            if(typeof tuple[1] === "string"){
+                settings[tuple[0]] = parseInt(tuple[1]);
+            }
+        }
+        return settings;
+   }
+
     let _setText = (id, text) => {
         const el = App._document.getElementById(id);
         el.value = text;
     };
 
     let _call = (callback) => {
-        const options = {
-            increment: 3,
-            rOffset: 1,
-            gOffset: 0,
-            bOffset: 0,
-            aOffset: 3
-        };
+        const options = _getSettings();
         const imageData = App._ctx.getImageData(0, 0, App._canvas.width, App._canvas.height);
         imageData.data = callback(imageData.data, options);
         App._ctx.putImageData(imageData, 0, 0);
@@ -85,6 +90,21 @@ const App = (function(){
         App._document = _document;
         App._canvas = document.getElementById("canvas");
         App._ctx = App._canvas.getContext("2d");
+        // Refactor
+        ["increment", "rOffset", "gOffset", "bOffset"].forEach((el, index) => {
+            _attachEventHandler(el, "change", (el, event) => {
+                _call((data, options) => {
+                    const outData = data;
+                    for(let i = 0; i < data.length; i += options.increment){
+                        outData[i+0] = options.rValue ? options.rValue : outData[i+options.rOffset]; // r
+                        outData[i+1] = options.gValue ? options.gValue : outData[i+options.gOffset]; // g
+                        outData[i+2] = options.bValue ? options.bValue : outData[i+options.bOffset]; // b
+                        outData[i+3] = options.aValue ? options.aValue : outData[i+options.aOffset]; // a
+                    }
+                    return outData;
+                });
+            })
+        });
 
         _attachEventHandler("fileInput", "change", (el, event) => {
             _toggleLoad();
@@ -97,16 +117,6 @@ const App = (function(){
                 App._canvas.height = image.height;
                 App._ctx.drawImage(image, 0, 0);
                 _toggleLoad();
-                _call((data, options) => {
-                    const outData = data;
-                    for(let i = 0; i < data.length; i += options.increment){
-                        outData[i+0] = options.rValue ? options.rValue : outData[i+options.rOffset]; // r
-                        outData[i+1] = options.gValue ? options.gValue : outData[i+options.gOffset]; // g
-                        outData[i+2] = options.bValue ? options.bValue : outData[i+options.bOffset]; // b
-                        outData[i+3] = options.aValue ? options.aValue : outData[i+options.aOffset]; // a
-                    }
-                    return outData;
-                });
             };
             image.onerror = () => {
                 _addError("imageForm", "Image could not be loaded");

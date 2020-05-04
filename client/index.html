@@ -22,9 +22,26 @@
       </nav>
     <div class="container">
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-3">
                 <form id="imageForm">
                     <legend>Upload image</legend>
+                    <fieldset class="form-group">
+                        <label for="increment">Increment</label>
+                        <input type="range" class="custom-range" id="increment" name="increment" value="0">
+                    </fieldset>
+                    <fieldset class="form-group">
+                        <legend>R offset</legend>
+                        <label for="rOffset">R offset</label>
+                        <input type="range" class="custom-range" id="rOffset" name="rOffset" value="0">
+                    </fieldset>
+                    <fieldset class="form-group">
+                        <label for="gOffset">G offset</label>
+                        <input type="range" class="custom-range" id="gOffset" name="gOffset" value="0">
+                    </fieldset>
+                    <fieldset class="form-group">
+                        <label for="bOffset">B offset</label>
+                        <input type="range" class="custom-range" id="bOffset" name="bOffset" value="0">
+                    </fieldset>
                     <fieldset>
                     <div class="form-group">
                         <label for="fileInput">Upload image</label>
@@ -33,7 +50,7 @@
                     </fieldset>
                 </form>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-9">
                 <div class="progress" id="loadingBar" style="display: none">
                     <div class="progress-bar progress-bar-striped progress-bar-animated" 
                          role="progressbar" 
