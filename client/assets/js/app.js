@@ -68,6 +68,9 @@ const App = (function(){
         const formData = new FormData(App._document.getElementById('imageForm'));
         for(const tuple of formData.entries()) {
             if(typeof tuple[1] === "string"){
+                if(tuple[0] === "increment" && tuple[1] === "0"){
+                    tuple[1] = "1";
+                }
                 settings[tuple[0]] = parseInt(tuple[1]);
             }
         }
@@ -79,10 +82,22 @@ const App = (function(){
         el.value = text;
     };
 
-    let _call = (callback) => {
+    let _update = () => {
         const options = _getSettings();
-        const imageData = App._ctx.getImageData(0, 0, App._canvas.width, App._canvas.height);
-        imageData.data = callback(imageData.data, options);
+        let imageData;
+        if(App._masterImageData){
+            imageData = App._masterImageData;
+        } else {
+            imageData = App._ctx.getImageData(0, 0, App._canvas.width, App._canvas.height);
+        }
+        const outData = imageData.data;
+        for(let i = 0; i < imageData.data.length; i += options.increment){
+            outData[i+0] = options.rValue ? options.rValue : imageData.data[i+options.rOffset]; // r
+            outData[i+1] = options.gValue ? options.gValue : imageData.data[i+options.gOffset]; // g
+            outData[i+2] = options.bValue ? options.bValue : imageData.data[i+options.bOffset]; // b
+            outData[i+3] = options.aValue ? options.aValue : imageData.data[i+options.aOffset]; // a
+        }
+        imageData.data = outData;
         App._ctx.putImageData(imageData, 0, 0);
     };
 
@@ -93,16 +108,7 @@ const App = (function(){
         // Refactor
         ["increment", "rOffset", "gOffset", "bOffset"].forEach((el, index) => {
             _attachEventHandler(el, "change", (el, event) => {
-                _call((data, options) => {
-                    const outData = data;
-                    for(let i = 0; i < data.length; i += options.increment){
-                        outData[i+0] = options.rValue ? options.rValue : outData[i+options.rOffset]; // r
-                        outData[i+1] = options.gValue ? options.gValue : outData[i+options.gOffset]; // g
-                        outData[i+2] = options.bValue ? options.bValue : outData[i+options.bOffset]; // b
-                        outData[i+3] = options.aValue ? options.aValue : outData[i+options.aOffset]; // a
-                    }
-                    return outData;
-                });
+                _update();
             })
         });
 
@@ -116,6 +122,7 @@ const App = (function(){
                 App._canvas.width = image.width;
                 App._canvas.height = image.height;
                 App._ctx.drawImage(image, 0, 0);
+                App._masterImageData = App._ctx.getImageData(0, 0, App._canvas.width, App._canvas.height);
                 _toggleLoad();
             };
             image.onerror = () => {
